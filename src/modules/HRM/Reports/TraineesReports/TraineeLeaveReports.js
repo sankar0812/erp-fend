@@ -1,0 +1,481 @@
+import { Col, Form } from "antd";
+import React, { Fragment, useEffect, useMemo, useState } from "react";
+import { CustomPageTitle } from "../../../../components/CustomPageTitle";
+import { CustomRow } from "../../../../components/CustomRow";
+import { Filter, MoveSlider } from "../Style";
+import { BiFilterAlt } from "react-icons/bi";
+import { CustomSelect } from "../../../../components/Form/CustomSelect";
+import { CustomModal } from "../../../../components/CustomModal";
+import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { selectCurrentId } from "../../../Auth/authSlice";
+import { useDispatch } from "react-redux";
+import { toast } from "react-toastify";
+import { CustomTag } from "../../../../components/Form/CustomTag";
+import { CommonLoading } from "../../../../components/CommonLoading";
+import { CustomStandardTable } from "../../../../components/Form/CustomStandardTable";
+import dayjs from "dayjs";
+import { TbArrowsExchange } from "react-icons/tb";
+import { CustomDateRangePicker } from "../../../../components/Form/CustomDateRangePicker";
+import Flex from "../../../../components/Flex";
+import ButtonStandard from "../../../../components/Form/CustomStandardButton";
+import request from "../../../../utils/request";
+import { APIURLS } from "../../../../utils/ApiUrls/Hrm";
+
+export const TraineeLeaveReports = () => {
+  const [form] = Form.useForm();
+  const nevigate = useNavigate();
+
+  const Employeeid = useSelector(selectCurrentId);
+  const [dateRange, setDateRange] = useState([]);
+  const [choiceFull, setChoiceFull] = useState("");
+  const [dataSource, setDataSource] = useState([]);
+  const [searchTexts, setSearchTexts] = useState([]);
+
+  const [modalWidth, setModalWidth] = useState(0);
+  const [showdetailsON, setShowdetailsON] = useState(false);
+  const [show, setShow] = useState(false); //  use Date filter
+  const [yearShow, setYearShow] = useState(false); // use  year filter
+  const [monthshow, setMonthShow] = useState(false); // use  month filter
+  const [yearData, setYearData] = useState([]); //  use year handle fn
+  const [monthData, setMonthData] = useState([]); //  use month handle fn
+  const [totalValues, setTotalValues] = useState({}); // use date filter values post
+
+  // ======  Modal Open ========
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // ======  Modal Title and Content ========
+  const [modalTitle, setModalTitle] = useState("");
+  const [modalContent, setModalContent] = useState(null);
+
+  // ----------  Form Reset UseState ---------
+  const [formReset, setFormReset] = useState(0);
+  const [trigger, setTrigger] = useState(0);
+  const dispatch = useDispatch();
+
+  // const InitialEmployeeDetails = useSelector(selectLeaveDetails);
+  // const InitialEmployeeStatus = useSelector(getLeaveDetailsStatus);
+  // const InitialEmployeeError = useSelector(getLeaveDetailsError);
+
+  // const EmployeeFindId = InitialEmployeeDetails?.filter((item) => item?.employeeId === Employeeid);
+
+  // const EmployeeFindId = useMemo(
+  //   () =>
+  //     InitialEmployeeDetails?.filter((item) => item?.employeeId == Employeeid),
+  //   [InitialEmployeeDetails, Employeeid]
+  // );
+
+  // useEffect(() => {
+  //   if (EmployeeFindId) {
+  //     setDataSource(EmployeeFindId);
+  //   }
+  // }, [EmployeeFindId]);
+
+  // useEffect(() => {
+  //   dispatch(getLeave());
+  // }, []);
+
+  // ===== Modal Functions Start =====
+
+  const showModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleOk = () => {
+    setIsModalOpen(false);
+    FormRest();
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+    FormRest();
+  };
+
+  const FormRest = () => {
+    setFormReset(formReset + 1);
+  };
+
+  //================= Delete filter leave fn============
+
+  const handleDateRangeChange = (values) => {
+    setDateRange(values);
+  };
+
+  const DatesFilter = [
+    { label: "This Month", value: "month" },
+    { label: "Year", value: "year" },
+    { label: "Custom", value: "date" },
+  ];
+
+  //===========  month  options==========
+  // const YearOptions = [];
+  // for (let year = 2010; year <= 2050; year++) {
+  //   YearOptions.push({ label: year.toString(), value: year.toString() });
+  // }
+
+  const currentYear = new Date().getFullYear();
+  const YearOptions = [{ label: currentYear.toString() + " - Current Year", value: currentYear.toString() }];
+  
+  for (let year = 2010; year <= 2050; year++) {
+      if (year !== currentYear) {
+          YearOptions.push({ label: year.toString(), value: year.toString() });
+      }
+  }
+  
+  //============ year options ============
+
+  const MonthOptions = [];
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  for (let i = 0; i < months.length; i++) {
+    MonthOptions.push({ label: months[i], value: months[i] });
+  }
+
+  //=====================================================
+
+  const handleMonthSelect = (value) => {
+    form.setFieldsValue({ range: null });
+    if (value === "date") {
+      setShow(true);
+      setMonthShow(false);
+      setYearShow(false);
+      setChoiceFull(value);
+    } else if (value === "month") {
+      setMonthShow(true);
+      setShow(false);
+      setYearShow(false);
+      setChoiceFull(value);
+    } else if (value === "year") {
+      setYearShow(true);
+      setShow(false);
+      setMonthShow(false);
+      setChoiceFull(value);
+    } else {
+      setMonthShow(false);
+      setYearShow(false);
+      setShow(false);
+    }
+
+    const choice = {
+      choose: value,
+    };
+  };
+
+  const handleYear = (values) => {
+    setYearData(values);
+  };
+  const handleMonth = (values) => {
+    setMonthData(values);
+  };
+
+  const DateSearch = (values) => {
+    request
+      .post(`${APIURLS.POSTREPORTTRAINEELEAVE}`, values)
+      .then(function (response) {
+        setDataSource(response.data);
+        if (response.data.length) {
+          toast.success("Date Filter Search");
+        } else {
+          toast.warn("No Data");
+        }
+      })
+      .catch(function (error) {
+        toast.error("Failed");
+        console.log(error, "hhhhhh");
+      });
+  };
+
+  const handleChange = () => {
+    setShowdetailsON(!showdetailsON);
+  };
+  //==========
+
+  useEffect(() => {
+    const newvalues = {
+      startDate: dateRange?.start_date,
+      endDate: dateRange?.end_date,
+      choose: choiceFull,
+    };
+    const yearvalues = {
+      choose: choiceFull,
+      year: yearData,
+    };
+    const monthvalues = {
+      choose: choiceFull,
+      monthName: monthData,
+    };
+    if (choiceFull === "year") {
+      setTotalValues(yearvalues);
+    } else if (choiceFull === "month") {
+      setTotalValues(monthvalues);
+    } else if (choiceFull === "date") {
+      setTotalValues(newvalues);
+    }
+  }, [yearData, monthData, choiceFull, dateRange]);
+
+  const onFinish = (values) => {
+    DateSearch(totalValues);
+  };
+  
+  const onFinishFailed = (errorInfo) => {
+    toast.warn("Please fill the details!");
+  };
+
+  const columns = [
+    {
+      title: "SI No",
+      render: (value, item, index) => index + 1,
+    },
+    {
+      title: "Employee Name",
+      dataIndex: "userName",
+      filteredValue: searchTexts ? [searchTexts] : null,
+      onFilter: (value, record) => {
+        return (
+          String(record.userName).toLowerCase().includes(value.toLowerCase()) ||
+          String(record.userName).includes(value.toUpperCase())
+        );
+      },
+    },
+    {
+      title: "Reason",
+      dataIndex: "reason",
+    },
+    {
+      title: "From Date",
+      dataIndex: "date",
+    },
+    {
+      title: "To Date",
+      dataIndex: "toDate",
+    },
+    {
+      title: "Total Day",
+      dataIndex: "totalDay",
+    },
+    {
+      title: "Status",
+      // dataIndex: "statusLevel",
+      render: (record, i) => {
+        return (
+          <Fragment>
+            {record.leavetype === "pending" && (
+              <CustomTag
+                bordered={"true"}
+                color={"warning"}
+                title={"Pending"}
+              />
+            )}
+
+            {record.leavetype === "rejected" && (
+              <CustomTag
+                bordered={"true"}
+                color={"error"}
+                title={"cancelled"}
+              />
+            )}
+
+            {record.leavetype === "approved" && (
+              <CustomTag
+                bordered={"true"}
+                color={"success"}
+                title={"Approval"}
+              />
+            )}
+          </Fragment>
+        );
+      },
+    },
+  ];
+
+  // let content;
+
+  // if (InitialEmployeeStatus === "loading") {
+  //   content = <CommonLoading />;
+  // } else if (InitialEmployeeStatus === "succeeded") {
+  //   const rowKey = (dataSource) => dataSource.employeeId;
+  //   content = (
+  //     <CustomStandardTable
+  //       columns={columns}
+  //       data={dataSource}
+  //       rowKey={rowKey}
+  //     />
+  //   );
+  // } else if (InitialEmployeeStatus === "failed") {
+  //   content = <h2>{InitialEmployeeError}</h2>;
+  // }
+
+  const rowKey = (dataSource) => dataSource?.employeeLeaveId
+
+  return (
+    <Fragment>
+      <CustomPageTitle Heading={"Trainee Leave Report"} />
+      <br />
+      <Form
+        form={form}
+        labelCol={{
+          span: 24,
+        }}
+        wrapperCol={{
+          span: 24,
+        }}
+        initialValues={{
+          from_date: dayjs(),
+          to_date: dayjs(),
+        }}
+        onFinish={onFinish}
+        onFinishFailed={onFinishFailed}
+        autoComplete="off"
+      >
+        <CustomRow space={[24, 24]}>
+          <Col span={24} md={5}>
+            <Filter onClick={handleChange}>
+              <BiFilterAlt />
+              &nbsp;&nbsp;Filter
+            </Filter>
+          </Col>
+          <Col span={24} md={15}></Col>
+          <Col span={24} md={4}></Col>
+        </CustomRow>
+        <MoveSlider showdetailsons={showdetailsON ? "true" : undefined}>
+          <CustomRow
+            space={[24, 24]}
+            style={{ marginTop: "20px", flexWrap: "wrap" }}
+          >
+            <>
+              <Col span={24} md={24} lg={3} style={{ marginTop: "10px" }}>
+                <b>Choose</b>&nbsp;&nbsp;
+              </Col>
+              <Col span={24} md={24} lg={10}>
+                <CustomSelect
+                  options={DatesFilter}
+                  name={"month"}
+                  placeholder={"Select"}
+                  onChange={handleMonthSelect}
+                  rules={[
+                    { required: true, message: "Please Select the Month" },
+                  ]}
+                />
+              </Col>
+              <Col span={24} md={24}>
+                {show ? (
+                  <CustomRow space={[24, 24]}>
+                    <Col span={24} md={24} lg={3}>
+                      <b>Between</b>&nbsp;&nbsp;
+                      <TbArrowsExchange />
+                    </Col>
+
+                    <Col span={24} md={24} lg={8}>
+                      <CustomDateRangePicker
+                        onChange={handleDateRangeChange}
+                        name={"range"}
+                        value={dateRange}
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please Select the Date",
+                          },
+                        ]}
+                      />
+                    </Col>
+
+                    <Col span={24} md={24} lg={6}>
+                      <Flex>
+                        <ButtonStandard.Primary
+                          text={"Submit"}
+                          htmlType="submit"
+                        />
+                      </Flex>
+                    </Col>
+                  </CustomRow>
+                ) : null}
+
+                {monthshow && (
+                  <>
+                    <CustomRow space={[24, 24]}>
+                      <Col span={24} md={24} lg={3}>
+                        <b>Month</b>&nbsp;&nbsp;
+                        <TbArrowsExchange />
+                      </Col>
+
+                      <Col span={24} md={24} lg={8}>
+                        <CustomSelect
+                          options={MonthOptions}
+                          onChange={handleMonth}
+                        />
+                      </Col>
+                      <Col span={24} md={24} lg={6}>
+                        <Flex>
+                          <ButtonStandard.Primary
+                            text={"Submit"}
+                            htmlType="submit"
+                          />
+                        </Flex>
+                      </Col>
+                    </CustomRow>
+                  </>
+                )}
+
+                {yearShow && (
+                  <>
+                    <CustomRow space={[24, 24]}>
+                      <Col span={24} md={3}>
+                        <b>Year</b>&nbsp;&nbsp;
+                        <TbArrowsExchange />
+                      </Col>
+
+                      <Col span={24} md={8}>
+                        <CustomSelect
+                          options={YearOptions}
+                          onChange={handleYear}
+                        />
+                      </Col>
+                      <Col span={24} md={6}>
+                        <Flex>
+                          <ButtonStandard.Primary
+                            text={"Submit"}
+                            htmlType="submit"
+                          />
+                        </Flex>
+                      </Col>
+                    </CustomRow>
+                  </>
+                )}
+              </Col>
+            </>
+          </CustomRow>
+        </MoveSlider>
+      </Form>
+
+      {/* {content} */}
+
+      <CustomStandardTable
+        columns={columns}
+        data={dataSource}
+        rowKey={rowKey}
+      />
+
+      <CustomModal
+        isVisible={isModalOpen}
+        handleOk={handleOk}
+        handleCancel={handleCancel}
+        width={modalWidth}
+        modalTitle={modalTitle}
+        modalContent={modalContent}
+      />
+    </Fragment>
+  );
+};

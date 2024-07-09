@@ -1,0 +1,25 @@
+const ADMIN = 'Admin';
+const EMPLOYEE = 'Employee';
+const TEAMLEADER = 'TL';
+const PROJECHEAD = 'ProjectHead';
+const CLIENT = 'Customer';
+const RESEARCH_DEVELOPER = 'Research';
+const MANAGER = 'Manager';
+const ACCOUNTANT = 'Accountant';
+const TRAINEE = 'Training'
+const SUPERADMIN = 'SuperAdmin'
+const PROJECTMANAGER = 'projectManager'
+
+export const USER_ROLES ={
+    ADMIN:ADMIN,
+    EMPLOYEE:EMPLOYEE,
+    TEAMLEADER:TEAMLEADER,
+    PROJECHEAD:PROJECHEAD,
+    CLIENT:CLIENT,
+    RESEARCH_DEVELOPER:RESEARCH_DEVELOPER,
+    MANAGER:MANAGER,
+    ACCOUNTANT:ACCOUNTANT,
+    TRAINEE:TRAINEE,
+    SUPERADMIN:SUPERADMIN,
+    PROJECTMANAGER:PROJECTMANAGER,
+}
