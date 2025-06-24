@@ -4,7 +4,7 @@ const baseURLs = {
 
   // development: 'http://192.168.29.106:8060/', // API server url (Development)
   development: 'http://168.231.102.58:8070/', // API server url (Development)
- production: 'http://168.231.102.58:8070/', // API server url (Production)
+ production: 'https://erp-bend.onrender.com/', // API server url (Production)
   staging: 'https://erp.dev.ideauxbill.in/',  // API server url (Staging)
 
 };
