@@ -3,7 +3,7 @@ import axios from 'axios';
 const baseURLs = {
 
   // development: 'http://192.168.29.106:8060/', // API server url (Development)
-  development: 'http://192.168.29.66:8070/', // API server url (Development)
+  development: 'http://168.231.102.58:8070/', // API server url (Development)
  production: 'https://erp.dev.api.ideauxbill.in/', // API server url (Production)
   staging: 'https://erp.dev.ideauxbill.in/',  // API server url (Staging)
 
